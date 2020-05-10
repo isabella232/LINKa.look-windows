@@ -14,6 +14,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using Tobii.Interaction;
+using Tobii.Interaction.Wpf;
 
 namespace LinkaWPF
 {
@@ -32,12 +34,54 @@ namespace LinkaWPF
         private CircularProgressBar _progress;
         private Storyboard _sb;
 
+        private Host _host;
+        private WpfInteractorAgent _agent;
+        private GazePointDataStream _lightlyFilteredGazePointDataStream;
+
+        private EyePositionStream _eyePositionStream;
+        private EyePositionData _eyePositionData;
+
         public MainWindow()
         {
             InitializeComponent();
 
+            // Everything starts with initializing Host, which manages connection to the 
+            // Tobii Engine and provides all Tobii Core SDK functionality.
+            // NOTE: Make sure that Tobii.EyeX.exe is running
+            _host = new Host();
+
+            // We need to instantiate InteractorAgent so it could control lifetime of the interactors.
+            _agent = _host.InitializeWpfAgent();
+
+            _lightlyFilteredGazePointDataStream = _host.Streams.CreateGazePointDataStream();
+
+            _eyePositionStream = _host.Streams.CreateEyePositionStream();
+            _eyePositionStream.Next += _eyePositionStream_Next;
+
+            //_lightlyFilteredGazePointDataStream.GazePoint((x, y, ts) => );
+
+            this.Closed += MainWindow_Closed;
+
             Init();
             Render();
+        }
+
+        private void _eyePositionStream_Next(object sender, StreamData<EyePositionData> e)
+        {
+            _eyePositionData = e.Data;
+
+            EyesInfoRender();
+        }
+
+        private void EyesInfoRender()
+        {
+            text.Text = "HasLeftEyePosition: " + _eyePositionData.HasLeftEyePosition + " HasRightEyePosition: " + _eyePositionData.HasRightEyePosition;
+        }
+
+        private void MainWindow_Closed(object sender, EventArgs e)
+        {
+            // we will close the coonection to the Tobii Engine before exit.
+            _host.DisableConnection();
         }
 
         private void Init()
