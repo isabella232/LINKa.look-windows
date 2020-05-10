@@ -70,12 +70,20 @@ namespace LinkaWPF
         {
             _eyePositionData = e.Data;
 
+            if (e.Data.HasLeftEyePosition == false && e.Data.HasRightEyePosition == false)
+            {
+                stopClick();
+            }
+
             EyesInfoRender();
         }
 
         private void EyesInfoRender()
         {
-            text.Text = "HasLeftEyePosition: " + _eyePositionData.HasLeftEyePosition + " HasRightEyePosition: " + _eyePositionData.HasRightEyePosition;
+            Dispatcher.Invoke(() =>
+            {
+                text.Text = "HasLeftEyePosition: " + _eyePositionData.HasLeftEyePosition + " HasRightEyePosition: " + _eyePositionData.HasRightEyePosition;
+            });
         }
 
         private void MainWindow_Closed(object sender, EventArgs e)
@@ -150,8 +158,8 @@ namespace LinkaWPF
             _progress.Visibility = Visibility.Hidden;
 
             var animation = new DoubleAnimation(0, 100, TimeSpan.FromSeconds(3));
-            animation.Completed += new EventHandler((o, args) => {                
-                _progress.Visibility = Visibility.Hidden;
+            animation.Completed += new EventHandler((o, args) => {
+                stopClick();
             });
             Storyboard.SetTarget(animation, _progress);
             Storyboard.SetTargetProperty(animation, new PropertyPath(CircularProgressBar.PercentageProperty));
@@ -232,6 +240,7 @@ namespace LinkaWPF
         private void stopClick()
         {
             _progress.Visibility = Visibility.Hidden;
+            _sb.Stop();
         }
 
         private void cardButton_MouseEnter(object sender, RoutedEventArgs e)
