@@ -72,7 +72,10 @@ namespace LinkaWPF
 
             if (e.Data.HasLeftEyePosition == false && e.Data.HasRightEyePosition == false)
             {
-                stopClick();
+                Dispatcher.Invoke(() =>
+                {
+                    stopClick();
+                });
             }
 
             EyesInfoRender();
