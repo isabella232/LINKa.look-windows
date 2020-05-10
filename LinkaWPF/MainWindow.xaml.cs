@@ -39,12 +39,53 @@ namespace LinkaWPF
         private GazePointDataStream _lightlyFilteredGazePointDataStream;
 
         private EyePositionStream _eyePositionStream;
-        private EyePositionData _eyePositionData;
+        private GazePointDataStream _gazePointDataStream;
 
         public MainWindow()
         {
             InitializeComponent();
 
+            InitTobii();
+
+            Closed += MainWindow_Closed;
+            MouseMove += MainWindow_MouseMove;
+
+            Init();
+            Render();
+        }
+
+        private void MainWindow_MouseMove(object sender, MouseEventArgs e)
+        {
+            //ellipse.Margin = new Thickness(0 - (mainGrid.ActualWidth / 2), 250 - (mainGrid.ActualHeight - 10), 0, 0);
+        }
+
+        private void _eyePositionStream_Next(object sender, StreamData<EyePositionData> e)
+        {
+            if (e.Data.HasLeftEyePosition == false && e.Data.HasRightEyePosition == false)
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    stopClick();
+                });
+            }
+        }
+
+        private void _gazePointDataStream_Next(object sender, StreamData<GazePointData> e)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                text.Text = "LeftX: " + e.Data.X + " RigthX: " + e.Data.Y;
+            });
+        }
+
+        private void MainWindow_Closed(object sender, EventArgs e)
+        {
+            // we will close the coonection to the Tobii Engine before exit.
+            _host.DisableConnection();
+        }
+
+        private void InitTobii()
+        {
             // Everything starts with initializing Host, which manages connection to the 
             // Tobii Engine and provides all Tobii Core SDK functionality.
             // NOTE: Make sure that Tobii.EyeX.exe is running
@@ -55,44 +96,12 @@ namespace LinkaWPF
 
             _lightlyFilteredGazePointDataStream = _host.Streams.CreateGazePointDataStream();
 
+            // Наблюдение за состоянием глаз
             _eyePositionStream = _host.Streams.CreateEyePositionStream();
             _eyePositionStream.Next += _eyePositionStream_Next;
 
-            //_lightlyFilteredGazePointDataStream.GazePoint((x, y, ts) => );
-
-            this.Closed += MainWindow_Closed;
-
-            Init();
-            Render();
-        }
-
-        private void _eyePositionStream_Next(object sender, StreamData<EyePositionData> e)
-        {
-            _eyePositionData = e.Data;
-
-            if (e.Data.HasLeftEyePosition == false && e.Data.HasRightEyePosition == false)
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    stopClick();
-                });
-            }
-
-            EyesInfoRender();
-        }
-
-        private void EyesInfoRender()
-        {
-            Dispatcher.Invoke(() =>
-            {
-                text.Text = "HasLeftEyePosition: " + _eyePositionData.HasLeftEyePosition + " HasRightEyePosition: " + _eyePositionData.HasRightEyePosition;
-            });
-        }
-
-        private void MainWindow_Closed(object sender, EventArgs e)
-        {
-            // we will close the coonection to the Tobii Engine before exit.
-            _host.DisableConnection();
+            _gazePointDataStream = _host.Streams.CreateGazePointDataStream();
+            _gazePointDataStream.Next += _gazePointDataStream_Next;
         }
 
         private void Init()
