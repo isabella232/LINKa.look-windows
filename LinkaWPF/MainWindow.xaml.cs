@@ -40,6 +40,9 @@ namespace LinkaWPF
 
         private EyePositionStream _eyePositionStream;
         private GazePointDataStream _gazePointDataStream;
+        private FixationDataStream _fixationDataStream;
+        private GazePointData _gazePointData;
+        private FixationData _fixationData;
 
         public MainWindow()
         {
@@ -57,25 +60,6 @@ namespace LinkaWPF
         private void MainWindow_MouseMove(object sender, MouseEventArgs e)
         {
             //ellipse.Margin = new Thickness(0 - (mainGrid.ActualWidth / 2), 250 - (mainGrid.ActualHeight - 10), 0, 0);
-        }
-
-        private void _eyePositionStream_Next(object sender, StreamData<EyePositionData> e)
-        {
-            if (e.Data.HasLeftEyePosition == false && e.Data.HasRightEyePosition == false)
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    stopClick();
-                });
-            }
-        }
-
-        private void _gazePointDataStream_Next(object sender, StreamData<GazePointData> e)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                text.Text = "LeftX: " + e.Data.X + " RigthX: " + e.Data.Y;
-            });
         }
 
         private void MainWindow_Closed(object sender, EventArgs e)
@@ -102,6 +86,43 @@ namespace LinkaWPF
 
             _gazePointDataStream = _host.Streams.CreateGazePointDataStream();
             _gazePointDataStream.Next += _gazePointDataStream_Next;
+
+            _fixationDataStream = _host.Streams.CreateFixationDataStream();
+            _fixationDataStream.Next += _fixationDataStream_Next;
+            
+        }
+
+        private void _eyePositionStream_Next(object sender, StreamData<EyePositionData> e)
+        {
+            if (e.Data.HasLeftEyePosition == false && e.Data.HasRightEyePosition == false)
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    stopClick();
+                });
+            }
+        }
+
+        private void _gazePointDataStream_Next(object sender, StreamData<GazePointData> e)
+        {
+            _gazePointData = e.Data;
+
+            RenderData();
+        }
+
+        private void _fixationDataStream_Next(object sender, StreamData<FixationData> e)
+        {
+            _fixationData = e.Data;
+
+            RenderData();
+        }
+
+        private void RenderData()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                text.Text = "GazePointDataX: " + _gazePointData.X + " GazePointDataY: " + _gazePointData.Y + " PointDataX: " + _fixationData.X + " PointDataY: " + _fixationData.Y;
+            });
         }
 
         private void Init()
