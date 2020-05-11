@@ -121,7 +121,9 @@ namespace LinkaWPF
         {
             Dispatcher.Invoke(() =>
             {
-                text.Text = "GazePointDataX: " + _gazePointData.X + " GazePointDataY: " + _gazePointData.Y + " PointDataX: " + _fixationData.X + " PointDataY: " + _fixationData.Y;
+                var gazePointData = _gazePointData != null ? "GazePointDataX: " + _gazePointData.X + " GazePointDataY: " + _gazePointData.Y : "";
+                var fixationData = _fixationData != null ? " FixationPointDataX: " + _fixationData.X + " FixationPointDataY: " + _fixationData.Y : "";
+                text.Text =  gazePointData + " " + fixationData;
             });
         }
 
